@@ -1,0 +1,64 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: git summary <commit>"
+}
+
+if [ ! -z "$1" -a "$1" = "-h" ]; then
+    usage
+    exit 0
+fi
+
+# get the project name from directory name
+project_name=$(basename $(git rev-parse --show-toplevel))
+
+commit="HEAD"
+[ $# -ne 0 ] && commit="$1"
+
+last_updated() {
+    git show -s --format='%ar' $commit || exit 1
+}
+
+commit_count() {
+    git rev-list $commit --count || exit 1
+}
+
+# list of files tracked with git
+file_count() {
+    git ls-files | wc -l | tr -d ' '
+}
+
+# the age of the repo based on first commit
+repo_age() {
+    git show -s --format='%ar' $(git rev-list --max-parents=0 HEAD) | sed 's/ago/old/'
+}
+
+# get author statistics
+author_stats() {
+    git shortlog -sn $commit | awk '
+    BEGIN{ sum = 0; width = 0; }
+    { args[NR] = $0;
+      sum += $0;
+      a = length($0);
+      if(width < a) {
+        width = a;
+      }
+    }
+    END {
+        printf "%-*s\t%s\n", width, "commits author", "percentage"
+        for(i = 1; i <= NR; ++i) {
+            printf "%-*s\t%9.1f%%\n", width, args[i], args[i] * 100 / sum
+        }
+    }'
+}
+
+# actually print usage now
+echo "project      : $project_name"
+echo "last updated :" $(last_updated)
+echo "repo age     :" $(repo_age)
+echo "files        :" $(file_count)
+echo "commits      :" $(commit_count)
+echo "author stats :"
+echo
+author_stats
+exit 0

@@ -1,0 +1,83 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: git alias [options] <name> <command>"
+}
+
+help_msg() {
+    cat <<\EOF
+
+    -h            show this message and exits
+    -d, --delete  remove an alias instead of adding one
+    --global      use global config file (default)
+    --system      use system config file
+    --local       use repository config file
+EOF
+}
+
+error() {
+    usage >&2
+    echo -e "error: $1" >&2
+    exit 1
+}
+
+# check if no arguments are given
+if [ $# == "0" ]; then
+    # just print all current aliases and exit
+    git config --get-regexp '^alias\.' | sed 's/alias\.\(\S*\)/\1 =/g'
+    exit
+fi
+
+# process command line arguments
+option="--global"
+delete=""
+
+while [ "$1" = "-?*" ]; do
+    case $1 in
+        -h)
+            help_msg
+            exit
+            ;;
+        --global)
+            option="--global"
+            ;;
+        --system)
+            option="--system"
+            ;;
+        --local)
+            option="--local"
+            ;;
+        -d|--delete)
+            delete="1"
+            ;;
+        --)
+            shift
+            break
+            ;;
+    esac
+    shift
+done
+
+# actually process the positional arguments
+name=$1
+al=$2
+
+if [ ! -z "$delete" ]; then
+    if [ -z "$name" -o "$name" == " " ]; then
+        error "missing alias name"
+    fi
+    git config --unset $option "alias.$name"
+    exit
+fi
+
+if [ -z "$name" -o "$name" == " " ]; then
+    error "missing alias name"
+fi
+
+if [ -z "$al" -o "$al" == " " ]; then
+    error "missing alias command"
+fi
+
+# do the work
+
+git config "$option" "alias.$name" "$al"

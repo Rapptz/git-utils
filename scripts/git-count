@@ -1,0 +1,83 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: git count [options] <author>"
+}
+
+help_msg() {
+    usage
+    cat <<\EOF
+
+shows the total commit count
+
+    -h        show this message and exits
+    --total   just display the total count
+    --all     show all contributor commit counts
+    --log     display a short log of commits
+EOF
+}
+
+error() {
+    usage >&2
+    echo "error: $1" >&2
+    exit 1
+}
+
+# parse command line arguments
+show_only_total_count=""
+show_log=""
+show_all=""
+
+while [ "$1" = "-?*" ]; do
+    case $1 in
+        -h)
+            help_msg
+            exit 0
+            ;;
+        --total)
+            show_only_total_count="1"
+            ;;
+        --log)
+            show_log="1"
+            ;;
+        --all)
+            show_all="1"
+            ;;
+        --)
+            shift
+            break
+            ;;
+    esac
+    shift
+done
+
+author=$1
+
+if [ ! -z "$show_only_total_count" ]; then
+    total_count=$(git rev-list HEAD --count || exit 1)
+    echo "total $total_count"
+    exit 0
+fi
+
+if [ ! -z "$show_all" ]; then
+    git shortlog -sn |
+    awk 'BEGIN{b = 0} \
+        { for(i = 1; i <= NF; i++) \
+        { a = length($i); if(a > b) b = a; } } \
+        { printf "%-*s (%s)\n", b + 1, substr($0, index($0, $2)), $1 }'
+    exit 0
+fi
+
+if [ -z "$author" -o "$author" == " " ]; then
+    error "author missing"
+fi
+
+count=$(git shortlog | grep -E -i "$author \(" | tr -dc '0-9')
+if [ -z "$show_log" ]; then
+    echo "$author ($count)"
+    exit 0
+fi
+
+# show the detailed log
+git shortlog | grep -E -i "$author \(" -A $count | less
+exit 0

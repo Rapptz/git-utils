@@ -1,0 +1,65 @@
+#!/bin/sh
+
+usage() {
+    echo "usage: git undo [-h] <command> [<arg>]..."
+}
+
+help_msg() {
+    usage
+    cat <<\EOF
+
+commands:
+    commit    undo the last commit
+    add       undo added file contents
+    rm        undo tracked file removal
+    changes   undo untracked changes
+    pull      undo fetched contents
+    merge     undo a merge
+    rebase    undo a rebase
+
+    commit, add, and rm commands can specify commits or files through the
+    remaining positional arguments
+options:
+    -h     shows this message and exits
+EOF
+}
+
+if [ ! -z "$1" -a "$1" = "-h" ]; then
+    help_msg
+    exit 0
+fi
+
+if [ ! -z "$1" -a  "$1" = "-?*" ]; then
+    usage >&2
+    echo "error: unrecognised option $1" >&2
+    exit 1
+fi
+
+cmd=$1
+shift
+
+case $cmd in
+    commit)
+        if [ -z "$1" ]; then
+            git reset --soft HEAD^ || exit 1
+        else
+            git revert "$@" || exit 1
+        fi
+        ;;
+    changes)
+        git reset --hard HEAD || exit 1
+        ;;
+    pull|merge|rebase)
+        git reset --hard HEAD@{0} || exit 1
+        ;;
+    add|rm)
+        git reset --mixed "$@"
+        ;;
+    *)
+        usage >&2
+        echo "error: unrecognised command $1" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
