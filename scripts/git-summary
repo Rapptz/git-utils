@@ -10,7 +10,7 @@ if [ ! -z "$1" -a "$1" = "-h" ]; then
 fi
 
 # get the project name from directory name
-project_name=$(basename $(git rev-parse --show-toplevel))
+project_name=$(basename "$(git rev-parse --show-toplevel)")
 
 commit="HEAD"
 [ $# -ne 0 ] && commit="$1"
