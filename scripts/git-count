@@ -10,6 +10,7 @@ help_msg() {
 
 shows the total commit count
 
+options:
     -h        show this message and exits
     --total   just display the total count
     --all     show all contributor commit counts

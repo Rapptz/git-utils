@@ -7,6 +7,7 @@ usage() {
 help_msg() {
     cat <<\EOF
 
+options:
     -h            show this message and exits
     -d, --delete  remove an alias instead of adding one
     --global      use global config file (default)
