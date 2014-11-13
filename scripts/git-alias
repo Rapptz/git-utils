@@ -5,6 +5,7 @@ usage() {
 }
 
 help_msg() {
+    usage
     cat <<\EOF
 
 options:
@@ -33,7 +34,7 @@ fi
 option="--global"
 delete=""
 
-while [ "$1" = "-?*" ]; do
+while [ $# -gt 0 ]; do
     case $1 in
         -h)
             help_msg
@@ -53,6 +54,13 @@ while [ "$1" = "-?*" ]; do
             ;;
         --)
             shift
+            break
+            ;;
+        -*)
+            error "unrecognised option $1"
+            break
+            ;;
+        *)
             break
             ;;
     esac
